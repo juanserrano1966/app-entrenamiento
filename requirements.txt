@@ -3,5 +3,5 @@ pandas
 plotly
 sqlalchemy
 gtts
-pygame
+playsound
 pillow
