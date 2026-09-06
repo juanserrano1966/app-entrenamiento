@@ -1,0 +1,27 @@
+dia,bloque,ejercicio,musculo,tipo,series,repeticiones,tiempo_segundos,nota
+Lunes,Core,plancha_frontal,Core,tiempo,3,0,30,Espalda recta
+Lunes,Core,puente_de_gluteos,Core,repeticiones,3,15,0,Aprieta glúteo
+Lunes,Core,bird_dog,Core,repeticiones,3,10,0,Espalda plana
+Lunes,TRX,trx_remo,Dorsales,repeticiones,3,10,0,Tira del pecho a las manos
+Lunes,Peso corporal,flexion_estandar,Pectorales,repeticiones,3,8,0,Manos al pecho
+Lunes,TRX,trx_curl_de_biceps,Bíceps,repeticiones,3,10,0,Tira a la cabeza
+Lunes,Peso corporal,fondos_en_silla,Tríceps,repeticiones,3,10,0,Baja a 90°
+Lunes,TRX,trx_sentadilla_asistida,Piernas,repeticiones,3,12,0,Agárrate a correas
+Lunes,Core,superman_estatico,Core,tiempo,3,0,15,Brazos y piernas arriba
+Miercoles,Core,plancha_lateral,Core,tiempo,3,0,25,Cadera arriba
+Miercoles,Core,puente_de_gluteos_una_pierna,Core,repeticiones,3,10,0,Pierna en aire
+Miercoles,TRX,trx_remo_con_rotacion,Dorsales,repeticiones,3,10,0,Gira al final
+Miercoles,Peso corporal,flexion_inclinada_silla,Pectorales,repeticiones,3,10,0,Silla para apoyar
+Miercoles,Peso corporal,dominada_australiana,Bíceps,repeticiones,3,6,0,Tira a la barra
+Miercoles,TRX,trx_flexion_diamante,Tríceps,repeticiones,3,8,0,Manos juntas
+Miercoles,TRX,trx_zancada_asistida,Piernas,repeticiones,3,8,0,Pierna atrás
+Miercoles,Core,plancha_frontal,Core,tiempo,3,0,30,Espalda recta
+Viernes,Core,bird_dog,Core,repeticiones,3,10,0,Espalda plana
+Viernes,Core,superman_estatico,Core,tiempo,3,0,15,Brazos y piernas arriba
+Viernes,TRX,trx_remo_a_una_mano,Dorsales,repeticiones,3,8,0,Alterna brazos
+Viernes,Peso corporal,flexion_con_apertura,Pectorales,repeticiones,3,8,0,Manos anchas
+Viernes,TRX,trx_curl_isometrico,Bíceps,repeticiones,3,6,0,3s pausa final
+Viernes,Peso corporal,flexion_diamante,Tríceps,repeticiones,3,8,0,Manos juntas
+Viernes,TRX,trx_sentadilla_bulgara_asistida,Piernas,repeticiones,3,6,0,Empeine en correa
+Viernes,Barra,colgado_isometrico,Espalda,tiempo,3,0,15,Activa escapulares
+Viernes,Barra,remo_invertido_barra_baja,Dorsales,repeticiones,3,5,0,Tira a la barra

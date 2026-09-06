@@ -1,0 +1,6 @@
+streamlit
+pandas
+plotly
+sqlalchemy
+gtts
+pygame
