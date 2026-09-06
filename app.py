@@ -4,23 +4,17 @@ from datetime import datetime
 import time
 import os
 import json
-from gtts import gTTS
-from playsound import playsound
 from PIL import Image
 import unicodedata
 
 # Configuración de la página
 st.set_page_config(page_title="Entrenamiento Juan", page_icon="💪", layout="centered")
 
-# --- FUNCIÓN PARA HABLAR (usa playsound, ligero y sin dependencias) ---
+# --- FUNCIÓN DE VOZ DESACTIVADA (para evitar errores) ---
 def hablar(texto):
-    try:
-        tts = gTTS(text=texto, lang="es", slow=False)
-        tts.save("temp.mp3")
-        playsound("temp.mp3")
-        os.remove("temp.mp3")
-    except Exception as e:
-        pass  # Si falla la voz, no interrumpimos el entrenamiento
+    # Esta función está desactivada para garantizar el despliegue en la nube
+    # En futuras versiones añadiremos una solución de voz ligera
+    pass
 
 # --- FUNCIÓN PARA MOSTRAR IMAGEN (MAPA DE NOMBRES) ---
 def mostrar_imagen_ejercicio(nombre_desde_csv):
@@ -170,7 +164,6 @@ if menu == "🏋️ Entrenar":
             if not st.session_state.cardio_activo and st.button("▶️ Iniciar cardio", type="primary", use_container_width=True):
                 st.session_state.cardio_activo = True
                 st.session_state.tiempo_inicio = datetime.now()
-                hablar("Cardio iniciado")
                 st.rerun()
         with col2:
             if st.session_state.cardio_activo and st.button("⏹️ Finalizar", type="primary", use_container_width=True):
@@ -178,7 +171,6 @@ if menu == "🏋️ Entrenar":
                 if st.session_state.tiempo_inicio:
                     delta = datetime.now() - st.session_state.tiempo_inicio
                     st.session_state.tiempo_transcurrido = int(delta.total_seconds())
-                hablar("Cardio finalizado")
                 st.rerun()
         with col3:
             if st.button("🔄 Reiniciar", use_container_width=True):
@@ -262,10 +254,8 @@ if menu == "🏋️ Entrenar":
             # --- MOSTRAR PLAN COMPLETO DEL DÍA ---
             st.subheader("📋 Plan completo del día")
             
-            # Convertir a lista para poder modificar
             ejercicios_lista = ejercicios_hoy.to_dict('records')
             
-            # Aplicar modificaciones guardadas para este día
             if clave_dia in modificaciones:
                 for i, ej in enumerate(ejercicios_lista):
                     if i < len(modificaciones[clave_dia]):
@@ -277,7 +267,6 @@ if menu == "🏋️ Entrenar":
                         else:
                             ej['repeticiones'] = mod.get('repeticiones', ej['repeticiones'])
             
-            # Mostrar cada ejercicio con opción de modificar
             for i, row in enumerate(ejercicios_lista):
                 with st.container():
                     col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
@@ -303,7 +292,6 @@ if menu == "🏋️ Entrenar":
                             guardar_modificaciones(modificaciones)
                             st.rerun()
                 
-                # --- FORMULARIO DE EDICIÓN ---
                 if 'editando' in st.session_state and st.session_state.editando == i:
                     with st.expander(f"✏️ Modificando: {row['ejercicio']}", expanded=True):
                         nuevo_nombre = st.text_input("Nombre del ejercicio:", value=row['ejercicio'], key=f"nombre_{i}")
@@ -342,7 +330,6 @@ if menu == "🏋️ Entrenar":
                                 del st.session_state.editando
                                 st.rerun()
             
-            # --- BOTÓN PARA AÑADIR EJERCICIO ---
             if st.button("➕ Añadir ejercicio al final", use_container_width=True):
                 nuevo_ej = {
                     'ejercicio': 'Nuevo ejercicio',
@@ -365,7 +352,6 @@ if menu == "🏋️ Entrenar":
                 guardar_modificaciones(modificaciones)
                 st.rerun()
             
-            # --- BOTÓN COMENZAR ENTRENAMIENTO ---
             st.divider()
             if st.button("▶️ Comenzar entrenamiento", type="primary", use_container_width=True):
                 st.session_state.entrenando = True
@@ -373,10 +359,8 @@ if menu == "🏋️ Entrenar":
                 st.session_state.ejercicios_lista = ejercicios_lista
                 st.session_state.completados = []
                 st.session_state.voz_reproducida = False
-                hablar("Comenzando entrenamiento")
                 st.rerun()
 
-            # --- MODO ENTRENAMIENTO ---
             if "entrenando" in st.session_state and st.session_state.entrenando:
                 ejercicios = st.session_state.ejercicios_lista
                 idx = st.session_state.ejercicio_actual
@@ -389,7 +373,6 @@ if menu == "🏋️ Entrenar":
                     
                     st.subheader(f"📍 {row['ejercicio']}")
                     
-                    # --- IMAGEN DEL EJERCICIO ---
                     mostrar_imagen_ejercicio(row['ejercicio'])
                     
                     st.write(f"**Músculo:** {row['musculo']}")
@@ -401,12 +384,6 @@ if menu == "🏋️ Entrenar":
                     
                     st.caption(f"📝 {row['nota']}")
                     
-                    # --- VOZ ---
-                    if not st.session_state.voz_reproducida:
-                        hablar(f"Empieza {row['ejercicio']}")
-                        st.session_state.voz_reproducida = True
-                    
-                    # --- TEMPORIZADOR (si es por tiempo) ---
                     if row["tipo"] == "tiempo":
                         if "temporizador_activo" not in st.session_state:
                             st.session_state.temporizador_activo = False
@@ -418,17 +395,13 @@ if menu == "🏋️ Entrenar":
                                 if st.button(f"⏱️ Iniciar temporizador ({row['tiempo_segundos']}s)", use_container_width=True):
                                     st.session_state.temporizador_activo = True
                                     st.session_state.tiempo_restante = row['tiempo_segundos']
-                                    hablar(f"{row['tiempo_segundos']} segundos")
                                     st.rerun()
                             else:
                                 placeholder = st.empty()
                                 for t in range(st.session_state.tiempo_restante, 0, -1):
                                     placeholder.metric("⏱️ Tiempo restante", f"{t}s")
-                                    if t in [5, 3, 1]:
-                                        hablar(str(t))
                                     time.sleep(1)
                                 placeholder.metric("⏱️ Tiempo restante", "¡TIEMPO!")
-                                hablar("Para")
                                 st.session_state.temporizador_activo = False
                                 st.session_state.tiempo_restante = 0
                                 st.rerun()
@@ -438,35 +411,28 @@ if menu == "🏋️ Entrenar":
                                 st.session_state.completados.append(row['ejercicio'])
                                 st.session_state.ejercicio_actual += 1
                                 st.session_state.voz_reproducida = False
-                                hablar("Siguiente ejercicio")
                                 st.rerun()
                     else:
-                        # --- EJERCICIO POR REPETICIONES ---
                         col1, col2 = st.columns([1, 1])
                         with col1:
                             if st.button("✅ Serie completada", type="primary", use_container_width=True):
                                 st.session_state.completados.append(row['ejercicio'])
                                 st.session_state.ejercicio_actual += 1
                                 st.session_state.voz_reproducida = False
-                                hablar("Siguiente ejercicio")
                                 st.rerun()
                         with col2:
                             if st.button("⏭️ Saltar", use_container_width=True):
                                 st.session_state.ejercicio_actual += 1
                                 st.session_state.voz_reproducida = False
-                                hablar("Siguiente ejercicio")
                                 st.rerun()
                     
                     if st.button("🚪 Salir del entrenamiento", use_container_width=True):
                         st.session_state.entrenando = False
-                        hablar("Entrenamiento finalizado")
                         st.rerun()
                 
                 else:
-                    # --- FIN DEL ENTRENAMIENTO ---
                     st.success("🎉 ¡Entrenamiento completado!")
                     st.write(f"✅ Has completado {len(st.session_state.completados)} ejercicios.")
-                    hablar("Entrenamiento completado")
                     
                     st.divider()
                     st.subheader("📝 ¿Cómo ha ido?")
@@ -487,12 +453,12 @@ if menu == "🏋️ Entrenar":
                             st.session_state.entrenando = False
                             st.rerun()
 
-# --- HISTORIAL (placeholder) ---
+# --- HISTORIAL ---
 elif menu == "📊 Historial":
     st.header("📊 Historial")
     st.info("Próximamente en la app nativa.")
 
-# --- AJUSTES (placeholder) ---
+# --- AJUSTES ---
 elif menu == "⚙️ Ajustes":
     st.header("⚙️ Ajustes")
     st.info("Próximamente en la app nativa.")
