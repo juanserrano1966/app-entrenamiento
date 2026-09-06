@@ -4,29 +4,23 @@ from datetime import datetime
 import time
 import os
 import json
-import pygame
 from gtts import gTTS
+from playsound import playsound
 from PIL import Image
 import unicodedata
 
-# Configuración
+# Configuración de la página
 st.set_page_config(page_title="Entrenamiento Juan", page_icon="💪", layout="centered")
 
-# --- FUNCIÓN PARA HABLAR ---
+# --- FUNCIÓN PARA HABLAR (usa playsound, ligero y sin dependencias) ---
 def hablar(texto):
     try:
         tts = gTTS(text=texto, lang="es", slow=False)
         tts.save("temp.mp3")
-        pygame.mixer.init()
-        pygame.mixer.music.load("temp.mp3")
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            time.sleep(0.1)
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
+        playsound("temp.mp3")
         os.remove("temp.mp3")
     except Exception as e:
-        pass
+        pass  # Si falla la voz, no interrumpimos el entrenamiento
 
 # --- FUNCIÓN PARA MOSTRAR IMAGEN (MAPA DE NOMBRES) ---
 def mostrar_imagen_ejercicio(nombre_desde_csv):
@@ -302,7 +296,6 @@ if menu == "🏋️ Entrenar":
                     with col4:
                         if st.button("🗑️", key=f"del_{i}"):
                             ejercicios_lista.pop(i)
-                            # Guardar cambios
                             mods = modificaciones.get(clave_dia, [])
                             if i < len(mods):
                                 mods.pop(i)
@@ -310,7 +303,7 @@ if menu == "🏋️ Entrenar":
                             guardar_modificaciones(modificaciones)
                             st.rerun()
                 
-                # --- FORMULARIO DE EDICIÓN (si se ha pulsado el botón) ---
+                # --- FORMULARIO DE EDICIÓN ---
                 if 'editando' in st.session_state and st.session_state.editando == i:
                     with st.expander(f"✏️ Modificando: {row['ejercicio']}", expanded=True):
                         nuevo_nombre = st.text_input("Nombre del ejercicio:", value=row['ejercicio'], key=f"nombre_{i}")
@@ -324,7 +317,6 @@ if menu == "🏋️ Entrenar":
                         col_guardar, col_cancelar = st.columns(2)
                         with col_guardar:
                             if st.button("✅ Guardar cambios", key=f"save_{i}"):
-                                # Actualizar el ejercicio
                                 row['ejercicio'] = nuevo_nombre
                                 row['series'] = nuevas_series
                                 if row["tipo"] == "tiempo":
@@ -332,7 +324,6 @@ if menu == "🏋️ Entrenar":
                                 else:
                                     row['repeticiones'] = nuevas_repeticiones
                                 
-                                # Guardar en modificaciones
                                 mods = modificaciones.get(clave_dia, [])
                                 while len(mods) <= i:
                                     mods.append({})
@@ -363,7 +354,6 @@ if menu == "🏋️ Entrenar":
                     'nota': 'Ejercicio añadido por el usuario'
                 }
                 ejercicios_lista.append(nuevo_ej)
-                # Guardar en modificaciones
                 mods = modificaciones.get(clave_dia, [])
                 mods.append({
                     'ejercicio': 'Nuevo ejercicio',
@@ -378,7 +368,6 @@ if menu == "🏋️ Entrenar":
             # --- BOTÓN COMENZAR ENTRENAMIENTO ---
             st.divider()
             if st.button("▶️ Comenzar entrenamiento", type="primary", use_container_width=True):
-                # Guardar la lista modificada en el estado de sesión
                 st.session_state.entrenando = True
                 st.session_state.ejercicio_actual = 0
                 st.session_state.ejercicios_lista = ejercicios_lista
@@ -386,6 +375,117 @@ if menu == "🏋️ Entrenar":
                 st.session_state.voz_reproducida = False
                 hablar("Comenzando entrenamiento")
                 st.rerun()
+
+            # --- MODO ENTRENAMIENTO ---
+            if "entrenando" in st.session_state and st.session_state.entrenando:
+                ejercicios = st.session_state.ejercicios_lista
+                idx = st.session_state.ejercicio_actual
+                
+                if idx < len(ejercicios):
+                    row = ejercicios[idx]
+                    
+                    st.progress((idx) / len(ejercicios))
+                    st.caption(f"Ejercicio {idx + 1} de {len(ejercicios)}")
+                    
+                    st.subheader(f"📍 {row['ejercicio']}")
+                    
+                    # --- IMAGEN DEL EJERCICIO ---
+                    mostrar_imagen_ejercicio(row['ejercicio'])
+                    
+                    st.write(f"**Músculo:** {row['musculo']}")
+                    
+                    if row["tipo"] == "tiempo":
+                        st.write(f"⏱️ **{row['series']} series de {row['tiempo_segundos']} segundos**")
+                    else:
+                        st.write(f"🔄 **{row['series']} series de {row['repeticiones']} repeticiones**")
+                    
+                    st.caption(f"📝 {row['nota']}")
+                    
+                    # --- VOZ ---
+                    if not st.session_state.voz_reproducida:
+                        hablar(f"Empieza {row['ejercicio']}")
+                        st.session_state.voz_reproducida = True
+                    
+                    # --- TEMPORIZADOR (si es por tiempo) ---
+                    if row["tipo"] == "tiempo":
+                        if "temporizador_activo" not in st.session_state:
+                            st.session_state.temporizador_activo = False
+                            st.session_state.tiempo_restante = 0
+                        
+                        col_timer1, col_timer2 = st.columns([2, 1])
+                        with col_timer1:
+                            if not st.session_state.temporizador_activo:
+                                if st.button(f"⏱️ Iniciar temporizador ({row['tiempo_segundos']}s)", use_container_width=True):
+                                    st.session_state.temporizador_activo = True
+                                    st.session_state.tiempo_restante = row['tiempo_segundos']
+                                    hablar(f"{row['tiempo_segundos']} segundos")
+                                    st.rerun()
+                            else:
+                                placeholder = st.empty()
+                                for t in range(st.session_state.tiempo_restante, 0, -1):
+                                    placeholder.metric("⏱️ Tiempo restante", f"{t}s")
+                                    if t in [5, 3, 1]:
+                                        hablar(str(t))
+                                    time.sleep(1)
+                                placeholder.metric("⏱️ Tiempo restante", "¡TIEMPO!")
+                                hablar("Para")
+                                st.session_state.temporizador_activo = False
+                                st.session_state.tiempo_restante = 0
+                                st.rerun()
+                        
+                        with col_timer2:
+                            if st.button("✅ Hecho", type="primary", use_container_width=True):
+                                st.session_state.completados.append(row['ejercicio'])
+                                st.session_state.ejercicio_actual += 1
+                                st.session_state.voz_reproducida = False
+                                hablar("Siguiente ejercicio")
+                                st.rerun()
+                    else:
+                        # --- EJERCICIO POR REPETICIONES ---
+                        col1, col2 = st.columns([1, 1])
+                        with col1:
+                            if st.button("✅ Serie completada", type="primary", use_container_width=True):
+                                st.session_state.completados.append(row['ejercicio'])
+                                st.session_state.ejercicio_actual += 1
+                                st.session_state.voz_reproducida = False
+                                hablar("Siguiente ejercicio")
+                                st.rerun()
+                        with col2:
+                            if st.button("⏭️ Saltar", use_container_width=True):
+                                st.session_state.ejercicio_actual += 1
+                                st.session_state.voz_reproducida = False
+                                hablar("Siguiente ejercicio")
+                                st.rerun()
+                    
+                    if st.button("🚪 Salir del entrenamiento", use_container_width=True):
+                        st.session_state.entrenando = False
+                        hablar("Entrenamiento finalizado")
+                        st.rerun()
+                
+                else:
+                    # --- FIN DEL ENTRENAMIENTO ---
+                    st.success("🎉 ¡Entrenamiento completado!")
+                    st.write(f"✅ Has completado {len(st.session_state.completados)} ejercicios.")
+                    hablar("Entrenamiento completado")
+                    
+                    st.divider()
+                    st.subheader("📝 ¿Cómo ha ido?")
+                    col_facil, col_normal, col_dificil = st.columns(3)
+                    with col_facil:
+                        if st.button("😊 Fácil", use_container_width=True):
+                            st.success("¡Subiremos la dificultad!")
+                            st.session_state.entrenando = False
+                            st.rerun()
+                    with col_normal:
+                        if st.button("🙂 Normal", use_container_width=True):
+                            st.info("Mantendremos la dificultad.")
+                            st.session_state.entrenando = False
+                            st.rerun()
+                    with col_dificil:
+                        if st.button("😰 Difícil", use_container_width=True):
+                            st.warning("Bajaremos la dificultad.")
+                            st.session_state.entrenando = False
+                            st.rerun()
 
 # --- HISTORIAL (placeholder) ---
 elif menu == "📊 Historial":
